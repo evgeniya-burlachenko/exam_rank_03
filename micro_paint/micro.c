@@ -1,50 +1,25 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   micro.c                                            :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: skelly <skelly@student.21-school.ru>       +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2021/11/19 21:39:00 by skelly            #+#    #+#             */
-/*   Updated: 2021/11/19 21:52:47 by skelly           ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 
-typedef struct s_zone
-{
-	int		width;
-	int		height;
-	char	backgrond;
-}	t_zone;
+#define ERR1 "Error: argument\n"
+#define ERR2 "Error: Operation file corrupted\n"
 
 typedef struct s_list
 {
-	char	type;
-	float	x;
-	float	y;
-	float	width;
-	float	height;
-	char	color;
+	int		wcanv, hcanv;
+	char	bg, type, color;
+	float	x, y, w, h;
+	
 }	t_list;
 
-int	ft_strlen(char *str)
+int	error(char *err)
 {
 	int	i = 0;
 
-	if (!str)
-		return (i);
-	while (str[i])
+	while (err[i])
 		i++;
-	return (i);
-}
-
-int	fail(char *str)
-{
-	write(1, str, ft_strlen(str));
+	write(1, err, i);
 	return (1);
 }
 
@@ -56,109 +31,77 @@ int	free_all(FILE *file, char *draw)
 	return (1);
 }
 
-char	*get_zone(FILE *file, t_zone *zone)
-{
-	int		count;
-	char	*array;
-	int		i;
-
-	if ((i = fscanf(file, "%d %d %c\n", &zone->width, &zone->height, &zone->backgrond)) != 3)
-		return (NULL);
-	if (i == (-1))
-		return (NULL);
-	if (zone->width <= 0 || zone->width > 300
-		|| zone->height <= 0 || zone->height > 300)
-		return (NULL);
-	if (!(array = (char *)malloc(sizeof(char) * (zone->width * zone->height))))
-		return (NULL);
-	i = 0;
-	while (i < zone->width * zone->height)
-	{
-		array[i] = zone->backgrond;
-		i++;
-	}
-	return (array);
-}
-
 int	is_rec(float y, float x, t_list *tmp)
 {
-	float	check = 1.00000000;
+	float	check = 1;
 
-	if ((x < tmp->x) || (tmp->x + tmp->width < x) || (y < tmp->y)
-		|| (tmp->y + tmp->height < y))
+	if ((x < tmp->x) || (tmp->x + tmp->w < x) || (y < tmp->y) || (tmp->y + tmp->h < y))
 		return (0);
-	if (((x - tmp->x) < check) || ((tmp->x + tmp->width) - x < check)
-		|| ((y - tmp->y) < check) || ((tmp->y + tmp->height) - y < check))
+	if (((x - tmp->x) < check) || ((tmp->x + tmp->w) - x < check)
+		|| ((y - tmp->y) < check) || ((tmp->y + tmp->h) - y < check))
 		return (2);
 	return (1);
 }
 
-void	get_draw(char *draw, t_list *tmp, t_zone *zone)
+int	drawing(FILE *file, char *draw, t_list list)
 {
-	int x, y;
-	int rec;
-
-	y = 0;
-	while (y < zone->height)
-	{
-		x = 0;
-		while (x < zone->width)
-		{
-			rec = is_rec(y, x, tmp);
-			if ((tmp->type == 'r' && rec == 2) || (tmp->type == 'R' && rec))
-				(draw)[(y * zone->width) + x] = tmp->color;
-			x++;
-		}
-		y++;
-	}
-}
-
-int	drawing(FILE *file, t_zone *zone, char *draw)
-{
-	t_list	tmp;
 	int		count;
 
-	while ((count = fscanf(file, "%c %f %f %f %f %c\n", &tmp.type, &tmp.x, &tmp.y, &tmp.width, &tmp.height, &tmp.color)) == 6)
+	while ((count = fscanf(file, "%c %f %f %f %f %c\n", &list.type, &list.x, &list.y,
+				&list.w, &list.h, &list.color)) == 6)
 	{
-		if ((tmp.height < 0.00000000 && tmp.width < 0.00000000)
-			&& (tmp.type != 'r' || tmp.type != 'R'))
+		if (!((list.h > 0 && list.w > 0)
+			&& (list.type == 'r' || list.type == 'R')))
 			return (0);
-		get_draw(draw, &tmp, zone);
+		int	x, y, rec;
+
+		y = -1;
+		while (++y < list.hcanv)
+		{
+			x = -1;
+			while (++x < list.wcanv)
+			{
+				rec = is_rec(y, x, &list);
+				if ((list.type == 'r' && rec == 2) || (list.type == 'R' && rec))
+					(draw)[(y * list.wcanv) + x] = list.color;
+			}
+		}
 	}
 	if (count != (-1))
 		return (0);
 	return (1);
 }
 
-void	print_draw(char *draw, t_zone *zone)
-{
-	int	i = 0;
-
-	while (i < zone->height)
-	{
-		write(1, draw + (i * zone->width), zone->width);
-		write(1, "\n", 1);
-		i++;
-	}
-}
-
-int	main(int ac, char **av)
+int	main(int argc, char **argv)
 {
 	FILE	*file;
-	t_zone	zone;
 	char	*draw;
+	t_list	list;
+	int		i;
 
-	if (ac != 2)
-		return (fail("Error: argument\n"));
-	if (!(file = fopen(av[1], "r")))
-		return (fail("Error: Operation file corrupted\n"));
-	if (!(draw = get_zone(file, &zone)))
-		return (free_all(file, NULL)
-			&& fail("Error: Operation file corrupted\n"));
-	if (!(drawing(file, &zone, draw)))
-		return (free_all(file, draw)
-			&& fail("Error: Operation file corrupted\n"));
-	print_draw(draw, &zone);
+	if (argc != 2)
+		return (error(ERR1));
+	else if (!(file = fopen(argv[1], "r")))
+		return (error(ERR2));
+	else if ((i = fscanf(file, "%d %d %c\n", &list.wcanv, &list.hcanv, &list.bg)) != 3)
+			return (free_all(file, NULL) && error(ERR2));
+	else if (i == (-1))
+			return (free_all(file, NULL) && error(ERR2));
+	else if (!(list.wcanv >= 0 && list.wcanv <= 300) && (list.hcanv >= 0 && list.hcanv <= 300))
+			return (free_all(file, NULL) && error(ERR2));
+	else if (!(draw = (char *)malloc(sizeof(char) * (list.wcanv * list.hcanv))))
+			return (free_all(file, NULL) && error(ERR2));
+	i = -1;
+	while (++i < list.wcanv * list.hcanv)
+		draw[i] = list.bg;
+	if (!(drawing(file, draw, list)))
+		return (free_all(file, draw) && error(ERR2));
+	i = -1;
+	while (++i < list.hcanv)
+	{
+		write(1, draw + (i * list.wcanv), list.wcanv);
+		write(1, "\n", 1);
+	}
 	free_all(file, draw);
 	return (0);
 }
