@@ -31,18 +31,6 @@ int	free_all(FILE *file, char *draw)
 	return (1);
 }
 
-int	is_rec(float y, float x, t_list *tmp)
-{
-	float	check = 1;
-
-	if ((x < tmp->x) || (tmp->x + tmp->w < x) || (y < tmp->y) || (tmp->y + tmp->h < y))
-		return (0);
-	if (((x - tmp->x) < check) || ((tmp->x + tmp->w) - x < check)
-		|| ((y - tmp->y) < check) || ((tmp->y + tmp->h) - y < check))
-		return (2);
-	return (1);
-}
-
 int	drawing(FILE *file, char *draw, t_list list)
 {
 	int		count;
@@ -61,7 +49,15 @@ int	drawing(FILE *file, char *draw, t_list list)
 			x = -1;
 			while (++x < list.wcanv)
 			{
-				rec = is_rec(y, x, &list);
+				float	check = 1;
+
+				if ((x < list.x) || (list.x + list.w < x) || (y < list.y) || (list.y + list.h < y))
+					rec = 0;
+				else if (((x - list.x) < check) || ((list.x + list.w) - x < check)
+					|| ((y - list.y) < check) || ((list.y + list.h) - y < check))
+					rec = 2;
+				else 
+					rec = 1;
 				if ((list.type == 'r' && rec == 2) || (list.type == 'R' && rec))
 					(draw)[(y * list.wcanv) + x] = list.color;
 			}
