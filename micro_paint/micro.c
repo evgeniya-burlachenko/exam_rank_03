@@ -34,8 +34,9 @@ int drawing(FILE *file, char *draw, t_list list)
 	int i, x, y, flag;
 	////r - пустой X Y WIDTH HEIGHT CHAR-------
 	//-----------fscanf--------------------------------
-	while ((i = fscanf(file, "%c %f %f %f %f %c\n", &list.type, &list.x, &list.y,
-					   &list.w, &list.h, &list.ch)) == 6)
+	while ((i = fscanf(file, "%c %f %f %f %f %c\n", \
+	&list.type, &list.x, &list.y, &list.w, &list.h, &list.ch)) \
+	== 6)
 	{
 		//--------диапазон && тип ----------------
 		if (!((list.h > 0 && list.w > 0) && (list.type == 'r' || list.type == 'R')))
@@ -49,7 +50,8 @@ int drawing(FILE *file, char *draw, t_list list)
 			{
 				flag = is_rec(x, y, list);
 				//----------если r и 2 - пустой || если R и 1 или 2 - заполненный----------------------------------------------------------------
-				if ((list.type == 'r' && flag == 2) || (list.type == 'R' && flag))
+				if ((list.type == 'r' && flag == 2) || \
+				(list.type == 'R' && flag))
 					(draw)[(y * list.wcanv) + x] = list.ch;
 				//draw[y * ширина + х]
 			}
@@ -74,27 +76,30 @@ int main(int argc, char **argv)
 		return (1);
 	}
 	//2-------fopen-----------------------------
-	else if (!(file = fopen(argv[1], "r")))
+	if (!(file = fopen(argv[1], "r")))
 	{
 		write(1, "Error: Operation file corupted\n", 31);
 		return (1);
 	}
 	//3-------fscanf----------------------------
-	else if ((i = fscanf(file, "%d %d %c\n", &list.wcanv, &list.hcanv, &list.bg)) != 3 || i == -1)
+	if ((i = fscanf(file, "%d %d %c\n", \
+	&list.wcanv, &list.hcanv, &list.bg)) != 3 || i == -1)
 	{
 		free_all(file, NULL);
 		write(1, "Error: Operation file corupted\n", 31);
 		return (1);
 	}
 	//4------диапазон---------------------------
-	else if (!((list.wcanv > 0 || list.wcanv <= 300) || (list.hcanv > 0 || list.hcanv <= 300)))
+	if (!(list.wcanv > 0 && list.wcanv <= 300 \
+	&& list.hcanv > 0 && list.hcanv <= 300))
 	{
 		free_all(file, NULL);
 		write(1, "Error: Operation file corupted\n", 31);
 		return (1);
 	}
 	//5------malloc-----------------------------
-	else if (!(draw = malloc(sizeof(char) * (list.wcanv * list.hcanv))))
+	if (!(draw = (char *)malloc(sizeof(char) \
+	* (list.wcanv * list.hcanv))))
 	{
 		free_all(file, NULL);
 		write(1, "Error: Operation file corupted\n", 31);
