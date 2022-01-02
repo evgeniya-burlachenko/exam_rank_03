@@ -19,12 +19,12 @@ void	free_all(FILE *file, char *draw)
 
 int	is_rec(int x, int y, t_list list)
 {//------не входит в диапазон-------------------------------------------------------
-	if ((x < list.x) || (list.x + list.w < x) || (y < list.y) \
-	|| (list.y + list.h < y))
+	if (x < list.x || list.x + list.w < x || y < list.y \
+	|| list.y + list.h < y)
 		return 0;
 	//------диапазон от 0 до 1------------------------------------------------------------------------
-	else if (((x - list.x) < 1) || ((list.x + list.w) - x < 1) \
-	|| ((y - list.y) < 1) || ((list.y + list.h) - y < 1))
+	else if (x - list.x < 1 || list.x + list.w - x < 1 \
+	|| y - list.y < 1 || list.y + list.h - y < 1)
 		return 2; //border
 return 1; //inside
 }
@@ -52,7 +52,7 @@ int drawing(FILE *file, char *draw, t_list list)
 				//----------если r и 2 - пустой || если R и 1 или 2 - заполненный----------------------------------------------------------------
 				if ((list.type == 'r' && flag == 2) || \
 				(list.type == 'R' && flag))
-					(draw)[(y * list.wcanv) + x] = list.ch;
+					draw[y * list.wcanv + x] = list.ch;
 				//draw[y * ширина + х]
 			}
 		}
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
 	}
 	//5------malloc-----------------------------
 	if (!(draw = (char *)malloc(sizeof(char) \
-	* (list.wcanv * list.hcanv))))
+	* list.wcanv * list.hcanv)))
 	{
 		free_all(file, NULL);
 		write(1, "Error: Operation file corupted\n", 31);
