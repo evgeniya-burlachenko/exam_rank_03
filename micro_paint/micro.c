@@ -2,9 +2,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define ERR1 "Error: argument\n"
-#define ERR2 "Error: Operation file corrupted\n"
-
 typedef struct s_list
 {
 	int		wcanv, hcanv;
@@ -13,53 +10,45 @@ typedef struct s_list
 	
 }	t_list;
 
-int	error(char *err)
-{
-	int	i = 0;
-
-	while (err[i])
-		i++;
-	write(1, err, i);
-	return (1);
-}
-
-int	free_all(FILE *file, char *draw)
+void	free_all(FILE *file, char *draw)
 {
 	fclose(file);
 	if (draw)
 		free(draw);
-	return (1);
 }
 
-int	drawing(FILE *file, char *draw, t_list list)
+int	is_rec(int x, int y, t_list list)
+{//------не входит в диапазон-------------------------------------------------------
+	if ((x < list.x) || (list.x + list.w < x) || (y < list.y) \
+	|| (list.y + list.h < y))
+		return 0;
+	//------диапазон от 0 до 1------------------------------------------------------------------------
+	else if (((x - list.x) < 1) || ((list.x + list.w) - x < 1) \
+	|| ((y - list.y) < 1) || ((list.y + list.h) - y < 1))
+		return 2; //border
+return 1; //inside
+}
+
+int drawing(FILE *file, char *draw, t_list list)
 {
-	int		i, x, y, flag;
+	int i, x, y, flag;
 	////r - пустой X Y WIDTH HEIGHT CHAR-------
 	//-----------fscanf--------------------------------
 	while ((i = fscanf(file, "%c %f %f %f %f %c\n", &list.type, &list.x, &list.y,
-				&list.w, &list.h, &list.ch)) == 6)
+					   &list.w, &list.h, &list.ch)) == 6)
 	{
-	//--------диапазон && тип ----------------
-		if ((list.h <= 0 || list.w <= 0) || (list.type != 'r' && list.type != 'R'))
+		//--------диапазон && тип ----------------
+		if (!((list.h > 0 && list.w > 0) && (list.type == 'r' || list.type == 'R')))
 			return (0);
-	//---------------------------------------------------------------------------------
+		//---------------------------------------------------------------------------------
 		y = -1;
-		while (++y < list.hcanv)//height
+		while (++y < list.hcanv) //height
 		{
 			x = -1;
-			while (++x < list.wcanv)//width
+			while (++x < list.wcanv) //width
 			{
-				float	check = 1;
-	//------не входит в диапазон-------------------------------------------------------
-				if ((x < list.x) || (list.x + list.w < x) || (y < list.y) || (list.y + list.h < y))
-					flag = 0;
-	//------диапазон от 0 до 1------------------------------------------------------------------------
-				else if (((x - list.x) < check) || ((list.x + list.w) - x < check)
-					|| ((y - list.y) < check) || ((list.y + list.h) - y < check))
-					flag = 2;//border
-				else 
-					flag = 1;//inside
-	//----------если r и 2 - пустой || если R и 1 или 2 - заполненный----------------------------------------------------------------
+				flag = is_rec(x, y, list);
+				//----------если r и 2 - пустой || если R и 1 или 2 - заполненный----------------------------------------------------------------
 				if ((list.type == 'r' && flag == 2) || (list.type == 'R' && flag))
 					(draw)[(y * list.wcanv) + x] = list.ch;
 				//draw[y * ширина + х]
@@ -71,35 +60,57 @@ int	drawing(FILE *file, char *draw, t_list list)
 	return (1);
 }
 
-int	main(int argc, char **argv)
+int main(int argc, char **argv)
 {
-	FILE	*file;
-	char	*draw;
-	t_list	list;
-	int		i;
+	FILE *file;
+	char *draw;
+	t_list list;
+	int i;
 	//-----------------проверки----------------------------------------------------------
 	//1-------2 аргумента-----------------------
 	if (argc != 2)
-		return (error(ERR1));
+	{
+		write(1, "Error: argument\n", 16);
+		return (1);
+	}
 	//2-------fopen-----------------------------
 	else if (!(file = fopen(argv[1], "r")))
-		return (error(ERR2));
+	{
+		write(1, "Error: Operation file corupted\n", 31);
+		return (1);
+	}
 	//3-------fscanf----------------------------
 	else if ((i = fscanf(file, "%d %d %c\n", &list.wcanv, &list.hcanv, &list.bg)) != 3 || i == -1)
-			return (free_all(file, NULL) && error(ERR2));
+	{
+		free_all(file, NULL);
+		write(1, "Error: Operation file corupted\n", 31);
+		return (1);
+	}
 	//4------диапазон---------------------------
-	else if ((list.wcanv <= 0 || list.wcanv > 300) || (list.hcanv <= 0 || list.hcanv > 300))
-			return (free_all(file, NULL) && error(ERR2));
+	else if (!((list.wcanv > 0 || list.wcanv <= 300) || (list.hcanv > 0 || list.hcanv <= 300)))
+	{
+		free_all(file, NULL);
+		write(1, "Error: Operation file corupted\n", 31);
+		return (1);
+	}
 	//5------malloc-----------------------------
 	else if (!(draw = malloc(sizeof(char) * (list.wcanv * list.hcanv))))
-			return (free_all(file, NULL) && error(ERR2));
+	{
+		free_all(file, NULL);
+		write(1, "Error: Operation file corupted\n", 31);
+		return (1);
+	}
 	//------------------draw----------------------------------------------
 	i = -1;
 	while (++i < list.wcanv * list.hcanv)
 		draw[i] = list.bg;
 	//-------------------рисуем прямоугольник-------------------------------------------
 	if (!(drawing(file, draw, list)))
-		return (free_all(file, draw) && error(ERR2));
+	{
+		free_all(file, draw);
+		write(1, "Error: Operation file corupted\n", 31);
+		return (1);
+	}
 	//-------------------печать----------------------------------------------------------
 	//(draw)[(y * list.wcanv) + x] = list.ch;
 	i = -1;
