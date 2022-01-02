@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 	//2-------fopen-----------------------------
 	if (!(file = fopen(argv[1], "r")))
 	{
-		write(1, "Error: Operation file corupted\n", 31);
+		write(1, "Error: Operation file corupted\n", 34);
 		return (1);
 	}
 	//3-------fscanf----------------------------
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 	&list.wcanv, &list.hcanv, &list.bg)) != 3 || i == -1)
 	{
 		free_all(file, NULL);
-		write(1, "Error: Operation file corupted\n", 31);
+		write(1, "Error: Operation file corupted\n", 34);
 		return (1);
 	}
 	//4------диапазон---------------------------
@@ -94,19 +94,13 @@ int main(int argc, char **argv)
 	&& list.hcanv > 0 && list.hcanv <= 300))
 	{
 		free_all(file, NULL);
-		write(1, "Error: Operation file corupted\n", 31);
+		write(1, "Error: Operation file corupted\n", 34);
 		return (1);
 	}
 	//5------malloc-----------------------------
-	if (!(draw = (char *)malloc(sizeof(char) \
-	* list.wcanv * list.hcanv)))
-	{
-		free_all(file, NULL);
-		write(1, "Error: Operation file corupted\n", 31);
-		return (1);
-	}
+	draw = (char *)malloc(sizeof(char) * list.wcanv * list.hcanv);
 	//------------------draw----------------------------------------------
-	i = -1;
+	 i = -1;
 	while (++i < list.wcanv * list.hcanv)
 		draw[i] = list.bg;
 	//-------------------рисуем прямоугольник-------------------------------------------
@@ -116,8 +110,7 @@ int main(int argc, char **argv)
 		write(1, "Error: Operation file corupted\n", 31);
 		return (1);
 	}
-	//-------------------печать----------------------------------------------------------
-	//(draw)[(y * list.wcanv) + x] = list.ch;
+	
 	i = -1;
 	while (++i < list.hcanv)
 	{
