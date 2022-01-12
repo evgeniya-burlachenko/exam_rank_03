@@ -86,7 +86,12 @@ int	main(int argc, char **argv)
 		write(1, "Error: Operation file corupted\n", 31);
 		return (1);
 	}
-	draw= (char *)malloc(sizeof(char) * list.wcanv * list.hcanv);
+	if (!(draw = (char *)malloc(sizeof(char) * list.wcanv * list.hcanv))
+	 {
+		free_all(file, NULL);
+		write(1, "Error: Operation file corupted\n", 34);
+		return (1);
+	}
 	i = -1;
 	while (++i < (list.wcanv * list.hcanv))
 		draw[i] = list.bg;
