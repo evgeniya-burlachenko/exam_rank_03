@@ -98,7 +98,12 @@ int main(int argc, char **argv)
 		return (1);
 	}
 	//5------malloc-----------------------------
-	draw = (char *)malloc(sizeof(char) * list.wcanv * list.hcanv);
+	if (!(draw = (char *)malloc(sizeof(char) * list.wcanv * list.hcanv))
+	 {
+		free_all(file, NULL);
+		write(1, "Error: Operation file corupted\n", 34);
+		return (1);
+	}
 	//------------------draw----------------------------------------------
 	 i = -1;
 	while (++i < list.wcanv * list.hcanv)
